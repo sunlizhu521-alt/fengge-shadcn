@@ -1,5 +1,7 @@
 import { THEME_STORAGE_KEY, themePresets } from "./theme-presets.js";
 
+const CUSTOM_STYLE_STORAGE_KEY = "shadcn-style-template-custom-styles";
+
 const projectItems = [
   { module: "客户资料", linked: true, score: 96, status: "正常" },
   { module: "订单审批", linked: true, score: 88, status: "待复核" },
@@ -27,13 +29,15 @@ const analysisMode = document.querySelector("#analysisMode");
 const analysisPrimary = document.querySelector("#analysisPrimary");
 const analysisBackground = document.querySelector("#analysisBackground");
 const analysisCard = document.querySelector("#analysisCard");
-const exportAnalyzedStyleButton = document.querySelector("#exportAnalyzedStyleButton");
+const addAnalyzedStyleButton = document.querySelector("#addAnalyzedStyleButton");
 const linkedCount = document.querySelector("#linkedCount");
 const averageScore = document.querySelector("#averageScore");
 const pendingCount = document.querySelector("#pendingCount");
 const logicRows = document.querySelector("#logicRows");
 
 let analyzedStyle = null;
+let customStyles = loadCustomStyles();
+let allThemePresets = [...themePresets, ...customStyles];
 
 const visualTokenNames = [
   "background",
@@ -105,8 +109,21 @@ const visualOnlyRules = {
   ]
 };
 
+function loadCustomStyles() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_STYLE_STORAGE_KEY) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomStyles() {
+  localStorage.setItem(CUSTOM_STYLE_STORAGE_KEY, JSON.stringify(customStyles));
+}
+
 function getThemeById(themeId) {
-  return themePresets.find((theme) => theme.id === themeId) || themePresets[0];
+  return allThemePresets.find((theme) => theme.id === themeId) || allThemePresets[0];
 }
 
 function getSavedTheme() {
@@ -118,6 +135,7 @@ function applyTheme(themeId) {
   const theme = getThemeById(themeId);
 
   document.documentElement.dataset.theme = theme.id;
+  applyCustomStyleTokens(theme);
   localStorage.setItem(THEME_STORAGE_KEY, theme.id);
   themeSelect.value = theme.id;
   updateThemeDetails(theme);
@@ -146,19 +164,19 @@ function getRelationTone(item) {
 }
 
 function renderThemeOptions() {
-  themeSelect.innerHTML = themePresets
+  themeSelect.innerHTML = allThemePresets
     .map((theme) => `<option value="${theme.id}">${theme.label}</option>`)
     .join("");
 }
 
 function renderThemeList() {
-  themeList.innerHTML = themePresets
+  themeList.innerHTML = allThemePresets
     .map(
       (theme) => `
-        <button class="style-option" type="button" data-theme-id="${theme.id}">
+        <button class="style-option" type="button" data-theme-id="${theme.id}" data-custom="${Boolean(theme.custom)}">
           <span>
             <strong>${theme.label}</strong>
-            <small>${theme.category}</small>
+            <small>${theme.custom ? "自定义 / " : ""}${theme.category}</small>
           </span>
           <i aria-hidden="true"></i>
         </button>
@@ -178,6 +196,18 @@ function updateThemeDetails(theme) {
   activeCategory.textContent = theme.category;
   activeDensity.textContent = theme.density;
   activeRadius.textContent = theme.radius;
+}
+
+function applyCustomStyleTokens(theme) {
+  visualTokenNames.forEach((tokenName) => {
+    document.documentElement.style.removeProperty(`--${tokenName}`);
+  });
+
+  if (!theme.custom || !theme.tokens) return;
+
+  Object.entries(theme.tokens).forEach(([tokenName, tokenValue]) => {
+    document.documentElement.style.setProperty(tokenName, tokenValue);
+  });
 }
 
 function updateThemeListState(themeId) {
@@ -222,42 +252,6 @@ function buildStyleExport(theme) {
     },
     codexInstructions:
       "只应用本文件中的视觉 CSS 变量和风格元数据。不得修改业务逻辑、字段映射、筛选、接口请求、权限判断、关联判断、表单校验、状态流转、统计计算或数据结果。优先只修改全局样式、主题预设、主题 provider/switcher 和 Tailwind 主题配置。"
-  };
-}
-
-function buildAnalyzedStyleExport(style) {
-  return {
-    format: "codex-shadcn-visual-style",
-    version: 1,
-    source: "screenshot-analysis",
-    exportedAt: new Date().toISOString(),
-    selectedStyle: {
-      id: style.id,
-      label: style.label,
-      baseColor: "Screenshot",
-      category: "截图解析风格",
-      tone: style.tone,
-      radius: "待项目确认",
-      density: "待项目确认"
-    },
-    applicationPolicy: {
-      visualOnly: true,
-      mustNotChangeProjectLogic: true,
-      allowedChangeScope: visualOnlyRules.allowedChangeScope,
-      preferredFiles: visualOnlyRules.preferredFiles,
-      forbiddenChanges: visualOnlyRules.forbiddenChanges
-    },
-    screenshotAnalysis: {
-      mode: style.mode,
-      palette: style.palette,
-      note: "该结果来自浏览器端 canvas 抽样解析，应用到项目时只能作为视觉变量参考。"
-    },
-    cssVariables: {
-      selector: `html[data-theme="${style.id}"]`,
-      tokens: style.tokens
-    },
-    codexInstructions:
-      "只应用本文件中的视觉 CSS 变量和风格元数据。不得修改业务逻辑、字段映射、筛选、接口请求、权限判断、关联判断、表单校验、状态流转、统计计算或数据结果。该文件来自截图解析，只能作为视觉风格参考。"
   };
 }
 
@@ -451,18 +445,18 @@ function renderAnalysis(style) {
   analysisBackground.textContent = style.background;
   analysisCard.textContent = style.card;
   analysisResult.hidden = false;
-  analysisHint.textContent = "请为这个解析出来的风格命名。命名后才可以导出。";
-  exportAnalyzedStyleButton.disabled = true;
+  analysisHint.textContent = "请为这个解析出来的风格命名。命名后才可以添加到看板。";
+  addAnalyzedStyleButton.disabled = true;
 }
 
 function updateAnalyzedName() {
   if (!analyzedStyle) return;
 
   const label = analysisName.value.trim();
-  exportAnalyzedStyleButton.disabled = !label;
+  addAnalyzedStyleButton.disabled = !label;
   analysisHint.textContent = label
-    ? "命名完成，可以导出。导出文件只包含视觉风格。"
-    : "请为这个解析出来的风格命名。命名后才可以导出。";
+    ? "命名完成，可以添加到风格看板。"
+    : "请为这个解析出来的风格命名。命名后才可以添加到看板。";
 }
 
 function loadImageFromFile(file) {
@@ -494,23 +488,35 @@ async function analyzeScreenshot(file) {
     id: "analyzed-style",
     label: "",
     tone: `${analysis.mode}，来自截图解析`,
+    baseColor: "Screenshot",
+    category: "截图解析风格",
+    radius: "待项目确认",
+    density: "待项目确认",
+    custom: true,
     ...analysis
   };
   renderAnalysis(analyzedStyle);
 }
 
-function exportAnalyzedStyle() {
+function addAnalyzedStyle() {
   if (!analyzedStyle || !analysisName.value.trim()) return;
 
   const label = analysisName.value.trim();
+  const id = `custom-${slugifyName(label)}`;
   const style = {
     ...analyzedStyle,
-    id: slugifyName(label),
-    label
+    id,
+    label,
+    createdAt: new Date().toISOString()
   };
 
-  downloadJson(`codex-shadcn-visual-style-${style.id}.json`, buildAnalyzedStyleExport(style));
-  analysisHint.textContent = `已导出 ${label}`;
+  customStyles = [style, ...customStyles.filter((item) => item.id !== id)];
+  allThemePresets = [...themePresets, ...customStyles];
+  saveCustomStyles();
+  renderThemeOptions();
+  renderThemeList();
+  applyTheme(style.id);
+  analysisHint.textContent = `已添加 ${label} 到风格看板。`;
 }
 
 function renderSummary() {
@@ -552,7 +558,7 @@ function init() {
     analyzeScreenshot(event.target.files[0]);
   });
   analysisName.addEventListener("input", updateAnalyzedName);
-  exportAnalyzedStyleButton.addEventListener("click", exportAnalyzedStyle);
+  addAnalyzedStyleButton.addEventListener("click", addAnalyzedStyle);
 }
 
 init();
