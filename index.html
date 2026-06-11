@@ -54,6 +54,59 @@
             </dl>
           </section>
 
+          <section class="analyzer-panel" aria-label="截图解析风格">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Screenshot Analyzer</p>
+                <h3>截图解析风格</h3>
+              </div>
+              <span class="status-chip">仅提取视觉</span>
+            </div>
+
+            <div class="analyzer-body">
+              <label class="upload-box" for="styleImageInput">
+                <span>上传风格截图</span>
+                <small>从截图中提取主色、背景、卡片和文字倾向</small>
+                <input id="styleImageInput" type="file" accept="image/*" />
+              </label>
+
+              <div class="analysis-result" id="analysisResult" hidden>
+                <div class="analysis-preview">
+                  <img id="analysisImage" alt="已上传的风格截图预览" hidden />
+                </div>
+                <div class="analysis-detail">
+                  <label>
+                    风格命名
+                    <input id="analysisName" placeholder="请为这个解析出来的风格命名" />
+                  </label>
+                  <p id="analysisHint">请先命名，再导出给 Codex 使用。</p>
+                  <div class="palette-row" id="analysisPalette" aria-label="解析色板"></div>
+                  <dl class="analysis-facts">
+                    <div>
+                      <dt>明暗倾向</dt>
+                      <dd id="analysisMode">-</dd>
+                    </div>
+                    <div>
+                      <dt>主色</dt>
+                      <dd id="analysisPrimary">-</dd>
+                    </div>
+                    <div>
+                      <dt>背景</dt>
+                      <dd id="analysisBackground">-</dd>
+                    </div>
+                    <div>
+                      <dt>卡片</dt>
+                      <dd id="analysisCard">-</dd>
+                    </div>
+                  </dl>
+                  <button class="btn primary" id="exportAnalyzedStyleButton" type="button" disabled>
+                    导出解析风格
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section class="summary-grid" aria-label="项目状态">
             <article class="metric-card">
               <span>关联检查</span>
