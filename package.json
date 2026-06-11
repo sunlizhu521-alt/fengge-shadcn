@@ -1,0 +1,9 @@
+{
+  "name": "shadcn-style-theme-project",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "check": "node --check theme-presets.js && node --check app.js && node --check server.mjs"
+  }
+}
