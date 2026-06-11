@@ -464,6 +464,20 @@ input:focus,
   line-height: 1.6;
 }
 
+.export-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.export-actions #exportStatus {
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .theme-facts {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
