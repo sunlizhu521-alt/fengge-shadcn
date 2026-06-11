@@ -179,6 +179,11 @@ function renderThemeList() {
             <strong>${theme.label}</strong>
             <small>${theme.custom ? "自定义 / " : ""}${theme.category}</small>
           </span>
+          ${
+            theme.custom
+              ? `<b class="delete-style" role="button" tabindex="0" aria-label="删除 ${theme.label}" data-delete-theme-id="${theme.id}">删除</b>`
+              : ""
+          }
           <i aria-hidden="true"></i>
         </button>
       `
@@ -187,6 +192,19 @@ function renderThemeList() {
 
   themeList.querySelectorAll(".style-option").forEach((button) => {
     button.addEventListener("click", () => applyTheme(button.dataset.themeId));
+  });
+  themeList.querySelectorAll(".delete-style").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      deleteCustomStyle(button.dataset.deleteThemeId);
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteCustomStyle(button.dataset.deleteThemeId);
+      }
+    });
   });
 }
 
@@ -209,6 +227,26 @@ function applyCustomStyleTokens(theme) {
   Object.entries(theme.tokens).forEach(([tokenName, tokenValue]) => {
     document.documentElement.style.setProperty(tokenName, tokenValue);
   });
+}
+
+function deleteCustomStyle(themeId) {
+  const deletedTheme = customStyles.find((theme) => theme.id === themeId);
+
+  if (!deletedTheme) return;
+
+  customStyles = customStyles.filter((theme) => theme.id !== themeId);
+  allThemePresets = [...themePresets, ...customStyles];
+  saveCustomStyles();
+  renderThemeOptions();
+  renderThemeList();
+
+  if (document.documentElement.dataset.theme === themeId) {
+    applyTheme(themePresets[0].id);
+  } else {
+    updateThemeListState(document.documentElement.dataset.theme);
+  }
+
+  analysisHint.textContent = `已删除 ${deletedTheme.label}`;
 }
 
 function updateThemeListState(themeId) {

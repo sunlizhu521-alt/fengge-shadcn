@@ -423,6 +423,23 @@ input:focus,
   border-radius: 999px;
 }
 
+.delete-style {
+  flex: 0 0 auto;
+  min-height: 26px;
+  border-radius: 999px;
+  background: hsl(var(--danger) / 0.1);
+  color: hsl(var(--danger));
+  padding: 5px 9px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.delete-style:focus-visible {
+  box-shadow: 0 0 0 3px hsl(var(--danger) / 0.18);
+  outline: none;
+}
+
 .style-option[data-active="true"] {
   border-color: hsl(var(--primary));
   background: hsl(var(--accent));
