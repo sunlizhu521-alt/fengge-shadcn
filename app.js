@@ -20,6 +20,7 @@ const activeRadius = document.querySelector("#activeRadius");
 const exportStyleButton = document.querySelector("#exportStyleButton");
 const exportStatus = document.querySelector("#exportStatus");
 const styleImageInput = document.querySelector("#styleImageInput");
+const styleDropZone = document.querySelector("#styleDropZone");
 const analysisResult = document.querySelector("#analysisResult");
 const analysisImage = document.querySelector("#analysisImage");
 const analysisName = document.querySelector("#analysisName");
@@ -475,6 +476,11 @@ function loadImageFromFile(file) {
 
 async function analyzeScreenshot(file) {
   if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    analysisResult.hidden = false;
+    analysisHint.textContent = "请上传图片文件。";
+    return;
+  }
 
   const image = await loadImageFromFile(file);
   const previewUrl = URL.createObjectURL(file);
@@ -496,6 +502,18 @@ async function analyzeScreenshot(file) {
     ...analysis
   };
   renderAnalysis(analyzedStyle);
+}
+
+function handleDroppedFiles(files) {
+  const file = [...files].find((item) => item.type.startsWith("image/"));
+
+  if (!file) {
+    analysisResult.hidden = false;
+    analysisHint.textContent = "请拖拽图片文件到这里。";
+    return;
+  }
+
+  analyzeScreenshot(file);
 }
 
 function addAnalyzedStyle() {
@@ -556,6 +574,21 @@ function init() {
   exportStyleButton.addEventListener("click", exportCurrentStyle);
   styleImageInput.addEventListener("change", (event) => {
     analyzeScreenshot(event.target.files[0]);
+  });
+  ["dragenter", "dragover"].forEach((eventName) => {
+    styleDropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      styleDropZone.dataset.dragging = "true";
+    });
+  });
+  ["dragleave", "drop"].forEach((eventName) => {
+    styleDropZone.addEventListener(eventName, () => {
+      styleDropZone.dataset.dragging = "false";
+    });
+  });
+  styleDropZone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    handleDroppedFiles(event.dataTransfer.files);
   });
   analysisName.addEventListener("input", updateAnalyzedName);
   addAnalyzedStyleButton.addEventListener("click", addAnalyzedStyle);

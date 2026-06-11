@@ -481,6 +481,16 @@ input:focus,
   cursor: pointer;
   padding: 18px;
   text-align: center;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.upload-box[data-dragging="true"] {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--accent));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.14);
 }
 
 .upload-box span {
