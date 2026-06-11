@@ -18,6 +18,7 @@ const activeCategory = document.querySelector("#activeCategory");
 const activeDensity = document.querySelector("#activeDensity");
 const activeRadius = document.querySelector("#activeRadius");
 const exportStyleButton = document.querySelector("#exportStyleButton");
+const deleteStyleButton = document.querySelector("#deleteStyleButton");
 const exportStatus = document.querySelector("#exportStatus");
 const styleImageInput = document.querySelector("#styleImageInput");
 const styleDropZone = document.querySelector("#styleDropZone");
@@ -179,11 +180,6 @@ function renderThemeList() {
             <strong>${theme.label}</strong>
             <small>${theme.custom ? "自定义 / " : ""}${theme.category}</small>
           </span>
-          ${
-            theme.custom
-              ? `<b class="delete-style" role="button" tabindex="0" aria-label="删除 ${theme.label}" data-delete-theme-id="${theme.id}">删除</b>`
-              : ""
-          }
           <i aria-hidden="true"></i>
         </button>
       `
@@ -192,19 +188,6 @@ function renderThemeList() {
 
   themeList.querySelectorAll(".style-option").forEach((button) => {
     button.addEventListener("click", () => applyTheme(button.dataset.themeId));
-  });
-  themeList.querySelectorAll(".delete-style").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.stopPropagation();
-      deleteCustomStyle(button.dataset.deleteThemeId);
-    });
-    button.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        event.stopPropagation();
-        deleteCustomStyle(button.dataset.deleteThemeId);
-      }
-    });
   });
 }
 
@@ -215,6 +198,7 @@ function updateThemeDetails(theme) {
   activeCategory.textContent = theme.category;
   activeDensity.textContent = theme.density;
   activeRadius.textContent = theme.radius;
+  deleteStyleButton.hidden = !theme.custom;
 }
 
 function applyCustomStyleTokens(theme) {
@@ -247,6 +231,7 @@ function deleteCustomStyle(themeId) {
   }
 
   analysisHint.textContent = `已删除 ${deletedTheme.label}`;
+  exportStatus.textContent = `已删除 ${deletedTheme.label}`;
 }
 
 function updateThemeListState(themeId) {
@@ -610,6 +595,9 @@ function init() {
   });
 
   exportStyleButton.addEventListener("click", exportCurrentStyle);
+  deleteStyleButton.addEventListener("click", () => {
+    deleteCustomStyle(document.documentElement.dataset.theme);
+  });
   styleImageInput.addEventListener("change", (event) => {
     analyzeScreenshot(event.target.files[0]);
   });
